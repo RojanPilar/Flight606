@@ -1,20 +1,19 @@
+const mongoose = require("mongoose");
 const Seat = require("../models/Seat");
 const Flight = require("../models/Flight");
 const { errorHandler } = require("../auth");
-const mongoose = require("mongoose");
 
 
 // USER LEVEL ACCESS
 
 module.exports.getSeatsByFlight = (req, res) => {
-	// FIX: Look up by ID directly without forcing isActive: true
 	return Flight.findById(req.params.flightId)
 		.then(flight => {
 			if (!flight) {
 				return res.status(404).send({ message: "Flight not found" });
 			}
 
-			// FIX: Query both string format and ObjectId format to support manual MongoDB Compass inputs
+			// Query both string format and ObjectId format to support manual MongoDB Compass inputs
 			return Seat.find({
 				$or: [
 					{ flightId: req.params.flightId },
@@ -24,8 +23,7 @@ module.exports.getSeatsByFlight = (req, res) => {
 			})
 			.sort({ seatNumber: 1 })
 			.then(result => {
-				// FIX: Instead of throwing a 404 error, safely return a 200 OK status 
-				// with empty statistics so the frontend doesn't crash.
+				// Safely return an empty list if no seats are found so frontend doesn't crash
 				if (!result || result.length === 0) {
 					return res.status(200).send({
 						message: "No seats found for this flight",
@@ -34,24 +32,7 @@ module.exports.getSeatsByFlight = (req, res) => {
 					});
 				}
 
-				// Summary counts — useful for the frontend to display
-				const total    = result.length;
-				const occupied = result.filter(s => s.isOccupied).length;
-				const available = total - occupied;
-
-				return res.status(200).send({
-					message: "Seats found",
-					summary: { total, occupied, available },
-					seats: result
-				});
-			});
-		})
-		.catch(err => errorHandler(err, req, res));
-};
-
-
-				// Summary counts — useful for the frontend to display
-				// "X of Y seats available" without counting client-side.
+				// Summary counts for frontend layout
 				const total    = result.length;
 				const occupied = result.filter(s => s.isOccupied).length;
 				const available = total - occupied;
