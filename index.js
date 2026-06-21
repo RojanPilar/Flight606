@@ -19,10 +19,12 @@ const notificationRoutes = require("./routes/notification");
 const seatRoutes = require("./routes/seat");
 const cors = require('cors');
 const corsOptions = {
-    origin: ["http://localhost:5173", "http://localhost:8000"],
+    // Setting origin to true dynamically allows whichever website is making the request
+    origin: true, 
     credentials: true,
     optionsSuccessStatus: 200
 };
+
 
 // APP INITIALIZATION 
 const app = express();

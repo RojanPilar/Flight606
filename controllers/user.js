@@ -12,14 +12,17 @@ module.exports.registerUser = (req, res) => {
 		return res.status(400).send({ message: "Email, password, and first name are required" });
 	}
 
-	return User.findOne({ email })
+	// FIX: Force lowercase and trim on registration query to prevent duplicate records
+	const cleanEmail = email.toLowerCase().trim();
+
+	return User.findOne({ email: cleanEmail })
 		.then(existingUser => {
 			if (existingUser) {
 				return res.status(409).send({ message: "An account with that email already exists" });
 			}
 
 			const newUser = new User({
-				email,
+				email: cleanEmail, // FIX: Save cleaned, lowercase email to the database
 				password: bcrypt.hashSync(password, 10),
 				firstName,
 				lastName: lastName || null
@@ -43,7 +46,7 @@ module.exports.loginUser = (req, res) => {
 	return User.findOne({ email: email.toLowerCase().trim() })
 		.then(user => {
 			if (!user) {
-				return res.status(404).send({ message: "No account found with that email" });
+				return res.status(404).send({ message: "Sorry, we don't recognize that email or password." });
 			}
 			if (!user.isActive) {
 				return res.status(403).send({ message: "This account has been deactivated" });
@@ -51,7 +54,7 @@ module.exports.loginUser = (req, res) => {
 
 			const isMatch = bcrypt.compareSync(password, user.password);
 			if (!isMatch) {
-				return res.status(401).send({ message: "Incorrect email or password" });
+				return res.status(401).send({ message: "Sorry, we don't recognize that email or password." });
 			}
 
 			// Key is "access" on purpose — LoginPage.vue already reads res.access
