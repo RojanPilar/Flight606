@@ -18,8 +18,14 @@ module.exports.getSeatsByFlight = (req, res) => {
 			})
 			.sort({ seatNumber: 1 })
 			.then(result => {
-				if (result.length === 0) {
-					return res.status(404).send({ message: "No seats found for this flight" });
+				// FIX: Instead of throwing a 404 error, safely return a 200 OK status 
+				// with empty statistics so the frontend doesn't crash.
+				if (!result || result.length === 0) {
+					return res.status(200).send({
+						message: "No seats found for this flight",
+						summary: { total: 0, occupied: 0, available: 0 },
+						seats: []
+					});
 				}
 
 				// Summary counts — useful for the frontend to display
