@@ -6,7 +6,8 @@ const { errorHandler } = require("../auth");
 // USER LEVEL ACCESS
 
 module.exports.getSeatsByFlight = (req, res) => {
-	return Flight.findOne({ _id: req.params.flightId, isActive: true })
+	// FIX: Look up by ID directly without forcing isActive: true
+	return Flight.findById(req.params.flightId)
 		.then(flight => {
 			if (!flight) {
 				return res.status(404).send({ message: "Flight not found" });
@@ -27,6 +28,7 @@ module.exports.getSeatsByFlight = (req, res) => {
 						seats: []
 					});
 				}
+
 
 				// Summary counts — useful for the frontend to display
 				// "X of Y seats available" without counting client-side.
