@@ -1,6 +1,7 @@
 const Seat = require("../models/Seat");
 const Flight = require("../models/Flight");
 const { errorHandler } = require("../auth");
+const mongoose = require("mongoose");
 
 
 // USER LEVEL ACCESS
@@ -13,8 +14,12 @@ module.exports.getSeatsByFlight = (req, res) => {
 				return res.status(404).send({ message: "Flight not found" });
 			}
 
+			// FIX: Query both string format and ObjectId format to support manual MongoDB Compass inputs
 			return Seat.find({
-				flightId: req.params.flightId,
+				$or: [
+					{ flightId: req.params.flightId },
+					{ flightId: new mongoose.Types.ObjectId(req.params.flightId) }
+				],
 				isActive: true
 			})
 			.sort({ seatNumber: 1 })
@@ -28,6 +33,21 @@ module.exports.getSeatsByFlight = (req, res) => {
 						seats: []
 					});
 				}
+
+				// Summary counts — useful for the frontend to display
+				const total    = result.length;
+				const occupied = result.filter(s => s.isOccupied).length;
+				const available = total - occupied;
+
+				return res.status(200).send({
+					message: "Seats found",
+					summary: { total, occupied, available },
+					seats: result
+				});
+			});
+		})
+		.catch(err => errorHandler(err, req, res));
+};
 
 
 				// Summary counts — useful for the frontend to display
